@@ -268,6 +268,7 @@ impl AsciiApp {
 
         egui::ColorImage {
             size: [width as usize, height as usize],
+            source_size: egui::Vec2::new(width as f32, height as f32),
             pixels,
         }
     }
@@ -320,7 +321,7 @@ impl eframe::App for AsciiApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         // Top menu bar
         egui::TopBottomPanel::top("menu_bar").show(ctx, |ui| {
-            egui::menu::bar(ui, |ui| {
+            egui::MenuBar::new().ui(ui, |ui| {
                 ui.menu_button("File", |ui| {
                     if ui.button("Open Image...").clicked() {
                         if let Some(path) = rfd::FileDialog::new()
@@ -329,7 +330,7 @@ impl eframe::App for AsciiApp {
                         {
                             self.load_image(&path);
                         }
-                        ui.close_menu();
+                        ui.close();
                     }
 
                     if ui.button("Save Output...").clicked() {
@@ -340,7 +341,7 @@ impl eframe::App for AsciiApp {
                         {
                             self.error_message = Some(e);
                         }
-                        ui.close_menu();
+                        ui.close();
                     }
 
                     ui.separator();
@@ -355,7 +356,7 @@ impl eframe::App for AsciiApp {
                         self.error_message = Some(
                             "ASCII Renderer\nBased on Acerola's shader algorithms\n\nBuilt with Rust + egui".to_string()
                         );
-                        ui.close_menu();
+                        ui.close();
                     }
                 });
             });
