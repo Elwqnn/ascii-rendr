@@ -1,0 +1,36 @@
+# Rust
+/target
+Cargo.lock
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Build artifacts
+*.so
+*.dylib
+*.dll
+*.exe
+
+# Test outputs
+*.png
+*.jpg
+*.jpeg
+/examples
+
+# Coverage
+cobertura.xml
+tarpaulin-report.html
+
+# Profiling
+flamegraph.svg
+perf.data
+perf.data.old
+
+# Environment
+.env
+.env.local

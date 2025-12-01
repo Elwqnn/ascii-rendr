@@ -1,0 +1,15 @@
+[workspace]
+members = ["lib", "gui"]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+authors = ["elwqnn"]
+license = "MIT"
+repository = "https://github.com/elwqnn/ascii-rendr"
+homepage = "https://github.com/elwqnn/ascii-rendr"
+documentation = "https://docs.rs/ascii-rendr"
+readme = "README.md"
+keywords = ["ascii", "art", "image", "processing", "acerola"]
+categories = ["multimedia::images", "graphics", "rendering"]

@@ -1,0 +1,17 @@
+[package]
+name = "ascii-rendr-gui"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+
+[[bin]]
+name = "ascii-gui"
+path = "src/main.rs"
+
+[dependencies]
+ascii-rendr = { path = "../lib" }
+eframe = "0.25"
+egui = "0.25"
+image = "0.24"
+rfd = "0.13"
+env_logger = "0.11"

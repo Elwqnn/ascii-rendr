@@ -1,0 +1,18 @@
+[package]
+name = "ascii-rendr"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+readme.workspace = true
+keywords.workspace = true
+categories.workspace = true
+description = "CPU-based ASCII art converter implementing Acerola shader algorithms with edge detection and luminance-based character selection"
+
+[dependencies]
+image = "0.24"
+imageproc = "0.24"
+rayon = "1.10"
