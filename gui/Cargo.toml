@@ -10,7 +10,7 @@ path = "src/main.rs"
 
 [dependencies]
 ascii-rendr = { path = "../lib" }
-eframe = "0.25"
+eframe = "0.33"
 egui = "0.25"
 image = "0.24"
 rfd = "0.13"
