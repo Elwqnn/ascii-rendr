@@ -1,5 +1,5 @@
-use std::f32::consts::PI;
 use rayon::prelude::*;
+use std::f32::consts::PI;
 
 /// Edge direction classification for ASCII character selection
 ///
@@ -7,10 +7,10 @@ use rayon::prelude::*;
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum EdgeDirection {
     None = -1,
-    Vertical = 0,     // | (0° or 180°)
-    Horizontal = 1,   // - (90°)
-    Diagonal1 = 2,    // / (45° to 90°, negative angles or 135° to 180°)
-    Diagonal2 = 3,    // \ (45° to 90°, positive angles or -135° to -45°)
+    Vertical = 0,   // | (0° or 180°)
+    Horizontal = 1, // - (90°)
+    Diagonal1 = 2,  // / (45° to 90°, negative angles or 135° to 180°)
+    Diagonal2 = 3,  // \ (45° to 90°, positive angles or -135° to -45°)
 }
 
 /// Classify edge direction from angle
@@ -40,15 +40,15 @@ pub fn classify_edge_direction(angle: f32) -> EdgeDirection {
         EdgeDirection::Horizontal
     } else if (0.05..0.45).contains(&abs_theta) {
         if angle > 0.0 {
-            EdgeDirection::Diagonal2  // \ (positive angles)
+            EdgeDirection::Diagonal2 // \ (positive angles)
         } else {
-            EdgeDirection::Diagonal1  // / (negative angles)
+            EdgeDirection::Diagonal1 // / (negative angles)
         }
     } else if (0.55..0.9).contains(&abs_theta) {
         if angle > 0.0 {
-            EdgeDirection::Diagonal1  // /
+            EdgeDirection::Diagonal1 // /
         } else {
-            EdgeDirection::Diagonal2  // \
+            EdgeDirection::Diagonal2 // \
         }
     } else {
         EdgeDirection::None
@@ -78,65 +78,71 @@ pub fn detect_edges_tiled(
 ) -> Vec<EdgeDirection> {
     assert_eq!(angles.len(), (width * height) as usize);
     assert_eq!(valid_mask.len(), (width * height) as usize);
-    assert!(width.is_multiple_of(8) && height.is_multiple_of(8), "Dimensions must be multiples of 8");
+    assert!(
+        width.is_multiple_of(8) && height.is_multiple_of(8),
+        "Dimensions must be multiples of 8"
+    );
 
     let tile_width = width / 8;
     let tile_height = height / 8;
     let num_tiles = (tile_width * tile_height) as usize;
 
     // Parallelize tile processing
-    (0..num_tiles).into_par_iter().map(|tile_idx| {
-        let tile_x = (tile_idx as u32) % tile_width;
-        let tile_y = (tile_idx as u32) / tile_width;
+    (0..num_tiles)
+        .into_par_iter()
+        .map(|tile_idx| {
+            let tile_x = (tile_idx as u32) % tile_width;
+            let tile_y = (tile_idx as u32) / tile_width;
 
-        // Count edge directions in this tile
-        let mut buckets = [0u32; 4];  // [Vertical, Horizontal, Diagonal1, Diagonal2]
+            // Count edge directions in this tile
+            let mut buckets = [0u32; 4]; // [Vertical, Horizontal, Diagonal1, Diagonal2]
 
-        // Scan all 64 pixels in this 8×8 tile
-        for local_y in 0..8 {
-            for local_x in 0..8 {
-                let pixel_x = tile_x * 8 + local_x;
-                let pixel_y = tile_y * 8 + local_y;
-                let idx = (pixel_y * width + pixel_x) as usize;
+            // Scan all 64 pixels in this 8×8 tile
+            for local_y in 0..8 {
+                for local_x in 0..8 {
+                    let pixel_x = tile_x * 8 + local_x;
+                    let pixel_y = tile_y * 8 + local_y;
+                    let idx = (pixel_y * width + pixel_x) as usize;
 
-                if valid_mask[idx] {
-                    let direction = classify_edge_direction(angles[idx]);
-                    match direction {
-                        EdgeDirection::Vertical => buckets[0] += 1,
-                        EdgeDirection::Horizontal => buckets[1] += 1,
-                        EdgeDirection::Diagonal1 => buckets[2] += 1,
-                        EdgeDirection::Diagonal2 => buckets[3] += 1,
-                        EdgeDirection::None => {}
+                    if valid_mask[idx] {
+                        let direction = classify_edge_direction(angles[idx]);
+                        match direction {
+                            EdgeDirection::Vertical => buckets[0] += 1,
+                            EdgeDirection::Horizontal => buckets[1] += 1,
+                            EdgeDirection::Diagonal1 => buckets[2] += 1,
+                            EdgeDirection::Diagonal2 => buckets[3] += 1,
+                            EdgeDirection::None => {}
+                        }
                     }
                 }
             }
-        }
 
-        // Find the most common edge direction (max bucket)
-        let mut max_count = 0;
-        let mut common_edge = EdgeDirection::None;
+            // Find the most common edge direction (max bucket)
+            let mut max_count = 0;
+            let mut common_edge = EdgeDirection::None;
 
-        for (i, &count) in buckets.iter().enumerate() {
-            if count > max_count {
-                max_count = count;
-                common_edge = match i {
-                    0 => EdgeDirection::Vertical,
-                    1 => EdgeDirection::Horizontal,
-                    2 => EdgeDirection::Diagonal1,
-                    3 => EdgeDirection::Diagonal2,
-                    _ => EdgeDirection::None,
-                };
+            for (i, &count) in buckets.iter().enumerate() {
+                if count > max_count {
+                    max_count = count;
+                    common_edge = match i {
+                        0 => EdgeDirection::Vertical,
+                        1 => EdgeDirection::Horizontal,
+                        2 => EdgeDirection::Diagonal1,
+                        3 => EdgeDirection::Diagonal2,
+                        _ => EdgeDirection::None,
+                    };
+                }
             }
-        }
 
-        // Only use the edge if enough pixels voted for it
-        // Matches shader logic: if (maxValue < _EdgeThreshold) commonEdgeIndex = -1;
-        if max_count < edge_threshold {
-            common_edge = EdgeDirection::None;
-        }
+            // Only use the edge if enough pixels voted for it
+            // Matches shader logic: if (maxValue < _EdgeThreshold) commonEdgeIndex = -1;
+            if max_count < edge_threshold {
+                common_edge = EdgeDirection::None;
+            }
 
-        common_edge
-    }).collect()
+            common_edge
+        })
+        .collect()
 }
 
 #[cfg(test)]
@@ -157,8 +163,14 @@ mod tests {
     fn test_classify_horizontal() {
         // Angles near 90° (π/2)
         assert_eq!(classify_edge_direction(0.5 * PI), EdgeDirection::Horizontal);
-        assert_eq!(classify_edge_direction(-0.5 * PI), EdgeDirection::Horizontal);
-        assert_eq!(classify_edge_direction(0.48 * PI), EdgeDirection::Horizontal);
+        assert_eq!(
+            classify_edge_direction(-0.5 * PI),
+            EdgeDirection::Horizontal
+        );
+        assert_eq!(
+            classify_edge_direction(0.48 * PI),
+            EdgeDirection::Horizontal
+        );
     }
 
     #[test]
@@ -231,6 +243,6 @@ mod tests {
     fn test_detect_edges_invalid_dimensions() {
         let angles = vec![0.0; 100];
         let valid = vec![false; 100];
-        detect_edges_tiled(&angles, &valid, 10, 10, 8);  // Not multiples of 8
+        detect_edges_tiled(&angles, &valid, 10, 10, 8); // Not multiples of 8
     }
 }

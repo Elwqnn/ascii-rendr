@@ -1,8 +1,8 @@
-use image::{GrayImage, RgbaImage, Rgba};
-use rayon::prelude::*;
 use crate::config::AsciiConfig;
 use crate::edges::EdgeDirection;
 use crate::lut::{get_edge_char, get_fill_char};
+use image::{GrayImage, Rgba, RgbaImage};
+use rayon::prelude::*;
 
 /// Select ASCII character for a tile
 ///
@@ -56,22 +56,25 @@ pub fn downscale_to_tiles(lum: &GrayImage, tile_size: u32) -> Vec<f32> {
     let num_tiles = (tile_width * tile_height) as usize;
 
     // Parallelize tile averaging
-    (0..num_tiles).into_par_iter().map(|tile_idx| {
-        let tile_x = (tile_idx as u32) % tile_width;
-        let tile_y = (tile_idx as u32) / tile_width;
-        let mut sum = 0.0;
+    (0..num_tiles)
+        .into_par_iter()
+        .map(|tile_idx| {
+            let tile_x = (tile_idx as u32) % tile_width;
+            let tile_y = (tile_idx as u32) / tile_width;
+            let mut sum = 0.0;
 
-        // Average all pixels in this tile
-        for local_y in 0..tile_size {
-            for local_x in 0..tile_size {
-                let px = tile_x * tile_size + local_x;
-                let py = tile_y * tile_size + local_y;
-                sum += lum.get_pixel(px, py)[0] as f32 / 255.0;
+            // Average all pixels in this tile
+            for local_y in 0..tile_size {
+                for local_x in 0..tile_size {
+                    let px = tile_x * tile_size + local_x;
+                    let py = tile_y * tile_size + local_y;
+                    sum += lum.get_pixel(px, py)[0] as f32 / 255.0;
+                }
             }
-        }
 
-        sum / (tile_size * tile_size) as f32
-    }).collect()
+            sum / (tile_size * tile_size) as f32
+        })
+        .collect()
 }
 
 /// Select ASCII characters for all tiles
@@ -97,32 +100,28 @@ pub fn select_ascii_chars(
     assert_eq!(tile_lum.len(), num_tiles);
 
     // Parallelize tile processing
-    (0..num_tiles).into_par_iter().map(|tile_idx| {
-        let tile_x = (tile_idx as u32) % tile_width;
-        let tile_y = (tile_idx as u32) / tile_width;
-        let edge_dir = edges[tile_idx];
-        let lum = tile_lum[tile_idx];
+    (0..num_tiles)
+        .into_par_iter()
+        .map(|tile_idx| {
+            let tile_x = (tile_idx as u32) % tile_width;
+            let tile_y = (tile_idx as u32) / tile_width;
+            let edge_dir = edges[tile_idx];
+            let lum = tile_lum[tile_idx];
 
-        // Generate 64 characters for this 8x8 tile
-        let mut tile_chars = Vec::with_capacity(64);
+            // Generate 64 characters for this 8x8 tile
+            let mut tile_chars = Vec::with_capacity(64);
 
-        for local_y in 0..8 {
-            for local_x in 0..8 {
-                let ch = select_ascii_char(
-                    edge_dir,
-                    lum,
-                    tile_x,
-                    tile_y,
-                    local_x,
-                    local_y,
-                    config,
-                );
-                tile_chars.push(ch);
+            for local_y in 0..8 {
+                for local_x in 0..8 {
+                    let ch =
+                        select_ascii_char(edge_dir, lum, tile_x, tile_y, local_x, local_y, config);
+                    tile_chars.push(ch);
+                }
             }
-        }
 
-        tile_chars
-    }).collect()
+            tile_chars
+        })
+        .collect()
 }
 
 /// Render ASCII characters to an image
@@ -171,8 +170,18 @@ pub fn render_ascii_to_image_with_source(
     let height = tile_height * 8;
     let mut output = RgbaImage::new(width, height);
 
-    let fg_color = Rgba([config.ascii_color[0], config.ascii_color[1], config.ascii_color[2], 255]);
-    let bg_color = Rgba([config.bg_color[0], config.bg_color[1], config.bg_color[2], 255]);
+    let fg_color = Rgba([
+        config.ascii_color[0],
+        config.ascii_color[1],
+        config.ascii_color[2],
+        255,
+    ]);
+    let bg_color = Rgba([
+        config.bg_color[0],
+        config.bg_color[1],
+        config.bg_color[2],
+        255,
+    ]);
 
     for tile_y in 0..tile_height {
         for tile_x in 0..tile_width {
@@ -192,7 +201,7 @@ pub fn render_ascii_to_image_with_source(
                         // Sample color from source image at this pixel
                         let src_pixel = src.get_pixel(px, py);
                         if should_draw_pixel(ch, local_x, local_y) {
-                            *src_pixel  // Use original color for foreground
+                            *src_pixel // Use original color for foreground
                         } else {
                             // Darken the original color for background
                             Rgba([
@@ -234,11 +243,11 @@ pub fn render_ascii_to_image_with_source(
 /// true if pixel should be drawn (foreground color), false for background
 fn should_draw_pixel(ch: char, x: u32, y: u32) -> bool {
     match ch {
-        ' ' => false,  // Space: always empty
+        ' ' => false, // Space: always empty
 
-        '|' => x == 3 || x == 4,  // Vertical bar in middle
+        '|' => x == 3 || x == 4, // Vertical bar in middle
 
-        '-' => y == 3 || y == 4,  // Horizontal bar in middle
+        '-' => y == 3 || y == 4, // Horizontal bar in middle
 
         '/' => {
             // Diagonal from bottom-left to top-right
@@ -251,14 +260,14 @@ fn should_draw_pixel(ch: char, x: u32, y: u32) -> bool {
             x == y || x == y.saturating_sub(1)
         }
 
-        '.' => (3..=4).contains(&x) && (3..=4).contains(&y),  // Small dot in center
+        '.' => (3..=4).contains(&x) && (3..=4).contains(&y), // Small dot in center
 
         ':' => {
             // Two dots vertically
             (3..=4).contains(&x) && (y == 2 || y == 5)
         }
 
-        '=' => y == 2 || y == 5,  // Two horizontal lines
+        '=' => y == 2 || y == 5, // Two horizontal lines
 
         '+' => {
             // Plus sign
@@ -320,10 +329,10 @@ mod tests {
         };
 
         let ch = select_ascii_char(EdgeDirection::None, 0.0, 0, 0, 0, 0, &config);
-        assert_eq!(ch, ' ');  // Darkest = space
+        assert_eq!(ch, ' '); // Darkest = space
 
         let ch = select_ascii_char(EdgeDirection::None, 1.0, 0, 0, 0, 0, &config);
-        assert_eq!(ch, '@');  // Brightest = @
+        assert_eq!(ch, '@'); // Brightest = @
     }
 
     #[test]
@@ -332,7 +341,7 @@ mod tests {
         let img = GrayImage::from_pixel(16, 16, Luma([128]));
         let tiles = downscale_to_tiles(&img, 8);
 
-        assert_eq!(tiles.len(), 4);  // 2x2 tiles
+        assert_eq!(tiles.len(), 4); // 2x2 tiles
         // All tiles should have average luminance ~0.5 (128/255)
         for &lum in &tiles {
             assert!((lum - 0.5).abs() < 0.01);
@@ -347,22 +356,22 @@ mod tests {
 
         let chars = select_ascii_chars(&edges, &tile_lum, 2, 1, &config);
 
-        assert_eq!(chars.len(), 2);  // 2 tiles
-        assert_eq!(chars[0].len(), 64);  // 64 chars per tile
+        assert_eq!(chars.len(), 2); // 2 tiles
+        assert_eq!(chars[0].len(), 64); // 64 chars per tile
         assert_eq!(chars[1].len(), 64);
     }
 
     #[test]
     fn test_render_ascii_to_image() {
         let chars = vec![
-            vec!['|'; 64],  // Tile 0: all vertical bars
-            vec![' '; 64],  // Tile 1: all spaces
+            vec!['|'; 64], // Tile 0: all vertical bars
+            vec![' '; 64], // Tile 1: all spaces
         ];
         let config = AsciiConfig::default();
 
         let img = render_ascii_to_image(&chars, 2, 1, &config);
 
-        assert_eq!(img.dimensions(), (16, 8));  // 2 tiles wide, 1 tile high, 8x8 pixels each
+        assert_eq!(img.dimensions(), (16, 8)); // 2 tiles wide, 1 tile high, 8x8 pixels each
     }
 
     #[test]

@@ -12,13 +12,10 @@ use crate::edges::EdgeDirection;
 pub const EDGE_CHARS: [[char; 8]; 4] = [
     // Vertical: |
     ['|', '|', '|', '|', '|', '|', '|', '|'],
-
     // Horizontal: -
     ['-', '-', '-', '-', '-', '-', '-', '-'],
-
     // Diagonal1: /
     ['/', '/', '/', '/', '/', '/', '/', '/'],
-
     // Diagonal2: \
     ['\\', '\\', '\\', '\\', '\\', '\\', '\\', '\\'],
 ];
@@ -28,16 +25,16 @@ pub const EDGE_CHARS: [[char; 8]; 4] = [
 /// 10 levels from darkest (space) to brightest (@)
 /// Based on common ASCII art ramps
 pub const FILL_CHARS: [char; 10] = [
-    ' ',  // 0: darkest
-    '.',  // 1
-    ':',  // 2
-    '-',  // 3
-    '=',  // 4
-    '+',  // 5
-    '*',  // 6
-    '#',  // 7
-    '%',  // 8
-    '@',  // 9: brightest
+    ' ', // 0: darkest
+    '.', // 1
+    ':', // 2
+    '-', // 3
+    '=', // 4
+    '+', // 5
+    '*', // 6
+    '#', // 7
+    '%', // 8
+    '@', // 9: brightest
 ];
 
 /// Get the appropriate edge character for a direction and tile position
@@ -80,7 +77,7 @@ pub fn get_fill_char(luminance: f32, invert: bool) -> char {
     // Shader logic: luminance = max(0, (floor(luminance * 10) - 1)) / 10.0f;
     // We just need the index, so: floor(luminance * 10)
     let index = (lum * 10.0).floor() as usize;
-    let index = index.min(9);  // Clamp to 0-9
+    let index = index.min(9); // Clamp to 0-9
 
     FILL_CHARS[index]
 }

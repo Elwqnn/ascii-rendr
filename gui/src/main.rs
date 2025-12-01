@@ -40,14 +40,14 @@ fn load_icon() -> egui::IconData {
             let is_hash = (x % 8 == 2 || x % 8 == 5) || (y % 8 == 2 || y % 8 == 5);
 
             if is_hash {
-                pixels[idx] = 255;     // R
+                pixels[idx] = 255; // R
                 pixels[idx + 1] = 255; // G
                 pixels[idx + 2] = 255; // B
                 pixels[idx + 3] = 255; // A
             } else {
-                pixels[idx] = 0;       // R
+                pixels[idx] = 0; // R
                 pixels[idx + 1] = 100; // G
-                pixels[idx + 2] = 0;   // B
+                pixels[idx + 2] = 0; // B
                 pixels[idx + 3] = 255; // A
             }
         }

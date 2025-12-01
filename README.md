@@ -65,6 +65,18 @@ cargo build --release
 cargo test
 ```
 
+## Development
+
+### Pre-commit Hooks
+
+To automatically check formatting and linting before commits:
+
+```bash
+./setup-hooks.sh
+```
+
+This configures git to run `cargo fmt --check` and `cargo clippy` before each commit. To bypass temporarily: `git commit --no-verify`
+
 ## Credits
 
 - Algorithm: [Acerola's](https://www.youtube.com/@Acerola_t) ASCII shader

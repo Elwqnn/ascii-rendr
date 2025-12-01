@@ -1,8 +1,11 @@
-use image::{RgbaImage, imageops};
+use crate::ascii::{
+    downscale_to_tiles, render_ascii_to_image, render_ascii_to_image_with_source,
+    select_ascii_chars,
+};
 use crate::config::AsciiConfig;
-use crate::filters::{calculate_luminance, difference_of_gaussians, sobel_filter};
 use crate::edges::detect_edges_tiled;
-use crate::ascii::{downscale_to_tiles, select_ascii_chars, render_ascii_to_image, render_ascii_to_image_with_source};
+use crate::filters::{calculate_luminance, difference_of_gaussians, sobel_filter};
+use image::{RgbaImage, imageops};
 
 /// Resize image to nearest dimensions that are multiples of 8
 ///
@@ -24,7 +27,12 @@ fn resize_to_valid_dimensions(input: &RgbaImage) -> (RgbaImage, bool) {
     }
 
     // Resize using Lanczos3 filter for high quality
-    let resized = imageops::resize(input, target_width, target_height, imageops::FilterType::Lanczos3);
+    let resized = imageops::resize(
+        input,
+        target_width,
+        target_height,
+        imageops::FilterType::Lanczos3,
+    );
     (resized, true)
 }
 
@@ -76,13 +84,7 @@ pub fn process_image(input: &RgbaImage, config: &AsciiConfig) -> RgbaImage {
     let (angles, valid_mask) = sobel_filter(&dog);
 
     // Step 4: Tile-based edge detection (8×8 tiles with voting)
-    let edges = detect_edges_tiled(
-        &angles,
-        &valid_mask,
-        width,
-        height,
-        config.edge_threshold,
-    );
+    let edges = detect_edges_tiled(&angles, &valid_mask, width, height, config.edge_threshold);
 
     // Step 5: Downscale luminance to 8×8 tiles
     let tile_lum = downscale_to_tiles(&lum, 8);
@@ -138,13 +140,7 @@ pub fn process_image_preserve_colors(input: &RgbaImage, config: &AsciiConfig) ->
     let (angles, valid_mask) = sobel_filter(&dog);
 
     // Step 4: Tile-based edge detection (8×8 tiles with voting)
-    let edges = detect_edges_tiled(
-        &angles,
-        &valid_mask,
-        width,
-        height,
-        config.edge_threshold,
-    );
+    let edges = detect_edges_tiled(&angles, &valid_mask, width, height, config.edge_threshold);
 
     // Step 5: Downscale luminance to 8×8 tiles
     let tile_lum = downscale_to_tiles(&lum, 8);
@@ -155,7 +151,13 @@ pub fn process_image_preserve_colors(input: &RgbaImage, config: &AsciiConfig) ->
     let chars = select_ascii_chars(&edges, &tile_lum, tile_width, tile_height, config);
 
     // Step 7: Render ASCII characters to image with color preservation
-    render_ascii_to_image_with_source(&chars, tile_width, tile_height, config, Some(&working_image))
+    render_ascii_to_image_with_source(
+        &chars,
+        tile_width,
+        tile_height,
+        config,
+        Some(&working_image),
+    )
 }
 
 #[cfg(test)]
@@ -164,7 +166,7 @@ mod tests {
 
     #[test]
     fn test_resize_to_valid_dimensions_no_resize() {
-        let img = RgbaImage::new(160, 160);  // Already valid (20*8 x 20*8)
+        let img = RgbaImage::new(160, 160); // Already valid (20*8 x 20*8)
         let (resized, was_resized) = resize_to_valid_dimensions(&img);
         assert_eq!(resized.dimensions(), (160, 160));
         assert!(!was_resized);
@@ -172,31 +174,31 @@ mod tests {
 
     #[test]
     fn test_resize_to_valid_dimensions_resize_needed() {
-        let img = RgbaImage::new(100, 100);  // Not multiple of 8
+        let img = RgbaImage::new(100, 100); // Not multiple of 8
         let (resized, was_resized) = resize_to_valid_dimensions(&img);
-        assert_eq!(resized.dimensions(), (96, 96));  // 100 -> 96 (12*8)
+        assert_eq!(resized.dimensions(), (96, 96)); // 100 -> 96 (12*8)
         assert!(was_resized);
     }
 
     #[test]
     fn test_resize_to_valid_dimensions_asymmetric() {
-        let img = RgbaImage::new(127, 85);  // Both not multiples of 8
+        let img = RgbaImage::new(127, 85); // Both not multiples of 8
         let (resized, was_resized) = resize_to_valid_dimensions(&img);
-        assert_eq!(resized.dimensions(), (120, 80));  // 127 -> 120, 85 -> 80
+        assert_eq!(resized.dimensions(), (120, 80)); // 127 -> 120, 85 -> 80
         assert!(was_resized);
     }
 
     #[test]
     fn test_process_invalid_dimensions_auto_resize() {
-        let img = RgbaImage::new(100, 100);  // Not multiple of 8, will be auto-resized
+        let img = RgbaImage::new(100, 100); // Not multiple of 8, will be auto-resized
         let config = AsciiConfig::default();
         let result = process_image(&img, &config);
-        assert_eq!(result.dimensions(), (96, 96));  // Resized to 96x96
+        assert_eq!(result.dimensions(), (96, 96)); // Resized to 96x96
     }
 
     #[test]
     fn test_process_valid_dimensions() {
-        let img = RgbaImage::new(160, 160);  // 20*8 x 20*8
+        let img = RgbaImage::new(160, 160); // 20*8 x 20*8
         let config = AsciiConfig::default();
         let result = process_image(&img, &config);
         assert_eq!(result.dimensions(), (160, 160));

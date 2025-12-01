@@ -1,0 +1,26 @@
+#!/bin/bash
+# Pre-commit hook for cargo fmt and clippy
+
+set -e
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NC='\033[0m' # No Color
+
+echo "Running cargo fmt..."
+cargo fmt --all -- --check
+if [ $? -ne 0 ]; then
+    echo -e "${RED}FAILED${NC}: Code formatting check failed. Run 'cargo fmt --all' to fix."
+    exit 1
+fi
+
+echo "Running cargo clippy..."
+cargo clippy --all-targets --all-features -- -D warnings
+if [ $? -ne 0 ]; then
+    echo -e "${RED}FAILED${NC}: Clippy check failed. Fix the warnings above."
+    exit 1
+fi
+
+echo -e "${GREEN}SUCCESS${NC}: All checks passed!"
+exit 0

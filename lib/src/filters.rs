@@ -226,24 +226,24 @@ pub fn sobel_filter(edges: &GrayImage) -> (Vec<f32>, Vec<bool>) {
         for x in 1..(width - 1) {
             // Get 3x3 neighborhood
             let nw = edges.get_pixel(x - 1, y - 1)[0] as f32;
-            let n  = edges.get_pixel(x,     y - 1)[0] as f32;
+            let n = edges.get_pixel(x, y - 1)[0] as f32;
             let ne = edges.get_pixel(x + 1, y - 1)[0] as f32;
-            let w  = edges.get_pixel(x - 1, y    )[0] as f32;
-            let e  = edges.get_pixel(x + 1, y    )[0] as f32;
+            let w = edges.get_pixel(x - 1, y)[0] as f32;
+            let e = edges.get_pixel(x + 1, y)[0] as f32;
             let sw = edges.get_pixel(x - 1, y + 1)[0] as f32;
-            let s  = edges.get_pixel(x,     y + 1)[0] as f32;
+            let s = edges.get_pixel(x, y + 1)[0] as f32;
             let se = edges.get_pixel(x + 1, y + 1)[0] as f32;
 
             // Compute Sobel gradients
-            let gx = (-nw + ne - 2.0*w + 2.0*e - sw + se) / 255.0;
-            let gy = (-nw - 2.0*n - ne + sw + 2.0*s + se) / 255.0;
+            let gx = (-nw + ne - 2.0 * w + 2.0 * e - sw + se) / 255.0;
+            let gy = (-nw - 2.0 * n - ne + sw + 2.0 * s + se) / 255.0;
 
             let magnitude = (gx * gx + gy * gy).sqrt();
             let idx = (y * width + x) as usize;
 
             if magnitude > 0.01 {
                 // Edge is valid if gradient magnitude is significant
-                angles[idx] = gy.atan2(gx);  // angle = atan2(Gy, Gx)
+                angles[idx] = gy.atan2(gx); // angle = atan2(Gy, Gx)
                 valid_mask[idx] = true;
             } else {
                 angles[idx] = 0.0;
@@ -279,7 +279,7 @@ mod tests {
         let lum = calculate_luminance(&img);
         // Should be close to 128
         let val = lum.get_pixel(0, 0)[0];
-        assert!(val >= 127 && val <= 129);
+        assert!((127..=129).contains(&val));
     }
 
     #[test]
