@@ -14,5 +14,5 @@ description = "CPU-based ASCII art converter implementing Acerola shader algorit
 
 [dependencies]
 image = "0.25"
-imageproc = "0.25"
+imageproc = "0.26"
 rayon = "1.10"
