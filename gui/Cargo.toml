@@ -13,7 +13,7 @@ ascii-rendr = { path = "../lib" }
 eframe = "0.33"
 egui = "0.33"
 image = "0.25"
-rfd = "0.16"
+rfd = "0.17"
 env_logger = "0.11"
 
 [target.'cfg(windows)'.dependencies]
